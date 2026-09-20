@@ -1,0 +1,13 @@
+{
+  "name": "homer-tools",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "build": "esbuild src/admin.js --bundle --minify --outfile=assets/admin.js --platform=browser",
+    "preview": "node scripts/preview.cjs"
+  },
+  "dependencies": {
+    "@cloudbase/js-sdk": "3.10.0",
+    "esbuild": "0.28.2"
+  }
+}

@@ -1,0 +1,7 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>管理 · Homer 工具箱</title><link rel="stylesheet" href="assets/admin.css"><script defer src="cloudbase.config.js"></script><script defer src="assets/admin.js"></script></head>
+<body><main><header><a href="./">← 工具箱</a><h1>管理</h1></header>
+<p id="status" role="status" aria-live="polite">正在初始化…</p>
+<form id="login"><label for="username">用户名</label><input id="username" name="username" value="homer" autocomplete="username" required maxlength="24"><label for="password">密码</label><input id="password" name="password" type="password" autocomplete="current-password" required><button id="signin" disabled>登录</button></form>
+<section id="workspace" hidden><div class="row"><h2>数据读写测试</h2><button id="logout" type="button">退出登录</button></div><form id="record-form"><label for="content">测试内容</label><textarea id="content" maxlength="2000" rows="4" required></textarea><div class="row"><button type="submit">保存到云端</button><button id="reload" type="button">重新读取</button></div></form><h2>最近的记录</h2><ul id="records"></ul></section>
+<noscript>请启用 JavaScript 后使用管理页面。</noscript></main></body></html>
