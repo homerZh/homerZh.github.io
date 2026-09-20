@@ -3,7 +3,8 @@
   "private": true,
   "version": "1.0.0",
   "scripts": {
-    "build": "esbuild src/admin.js --bundle --minify --outfile=assets/admin.js --platform=browser",
+    "build": "esbuild src/admin.js src/calories.js --bundle --minify --outdir=assets --platform=browser",
+    "test": "node --test tests/calorie-math.test.mjs",
     "preview": "node scripts/preview.cjs"
   },
   "dependencies": {
