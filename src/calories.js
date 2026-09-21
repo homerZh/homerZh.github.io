@@ -1,8 +1,7 @@
-import cloudbase from '@cloudbase/js-sdk';
+import { app } from './cloudbase-client.js';
 import {MEALS,todayShanghai,endDate,planDays,difference,totalDifference,targetKcal,validCalories,describeDifference} from './calorie-math.mjs';
 const $=id=>document.getElementById(id), config=window.CLOUDBASE_CONFIG;
 const names={breakfast:'早餐',lunch:'中餐',dinner:'晚餐'};
-const app=cloudbase.init({env:config.env,region:config.region,accessKey:config.accessKey});
 const auth=app.auth, db=app.rdb();
 let plan={id:'main',start_date:todayShanghai(),breakfast:550,lunch:880,dinner:770}, records=[],loaded=false,allowed=false,busy=false;
 $('date').value=todayShanghai();$('date').max=todayShanghai();

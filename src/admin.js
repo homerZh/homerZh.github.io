@@ -1,8 +1,8 @@
-import cloudbase from '@cloudbase/js-sdk';
+import { app } from './cloudbase-client.js';
 
 const config = window.CLOUDBASE_CONFIG;
 const $ = (id) => document.getElementById(id);
-let app, auth, db, busy = false;
+let auth, db, busy = false;
 function status(message, error = false) {
   $('status').textContent = message;
   $('status').classList.toggle('error', error);
@@ -98,7 +98,6 @@ $('logout').addEventListener('click', () => void run(async () => {
 }));
 void run(async () => {
   if (!config?.env || !config?.accessKey || !config?.adminUid) throw new Error('Missing config');
-  app = cloudbase.init({ env: config.env, region: config.region, accessKey: config.accessKey });
   auth = app.auth; db = app.rdb();
   auth.onAuthStateChange((event, session) => {
     if (event === 'SIGNED_OUT') { showSession(null); status('已退出登录。'); }
