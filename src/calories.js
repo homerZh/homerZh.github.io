@@ -7,7 +7,7 @@ const auth=app.auth, db=app.rdb();
 let plan={id:'main',start_date:todayShanghai(),breakfast:550,lunch:880,dinner:770}, records=[],loaded=false,allowed=false,busy=false;
 $('date').value=todayShanghai();$('date').max=todayShanghai();
 function checked(r){if(r.error)throw r.error;return r.data;}
-function status(s,error=false){$('status').textContent=s;$('status').classList.toggle('error',error);}
+function status(s,error=false){if(!error)$('retry').hidden=true;$('status').textContent=s;$('status').classList.toggle('error',error);}
 function admin(session){return session?.user?.id===config.adminUid;}
 function controls(){document.querySelectorAll('button').forEach(b=>b.disabled=busy||(!loaded&&b.closest('#meals, #settings-form')));$('date').disabled=busy;}
 function render(){
@@ -52,7 +52,8 @@ async function load(){
  plan=plans[0];records=all;loaded=true;render();
 }
 async function afterSave(message){try{await load();status(message);}catch{loaded=false;records=[];render();status('已保存，但刷新失败。请刷新页面重新读取，不要重复提交。',true);}}
-async function run(fn){if(busy)return;busy=true;controls();try{await fn();}catch(e){const code=String(e?.code||'');const msg=/PGRST205|42P01/.test(code)?'饮食记录表尚未创建，请先执行 calories.sql。':/42501/.test(code)?'数据库拒绝访问，请检查表权限。':e instanceof Error&&!code?e.message:'连接失败，请检查网络或数据库配置。';status(msg,true);}finally{busy=false;controls();}}
+async function run(fn){if(busy)return;busy=true;controls();try{await fn();}catch(e){const code=String(e?.code||'');const msg=/PGRST205|42P01/.test(code)?'饮食记录表尚未创建，请先执行 calories.sql。':/42501/.test(code)?'数据库拒绝访问，请检查表权限。':e instanceof Error&&!code?e.message:'连接失败，请检查网络或数据库配置。';const safeCode=/^[A-Za-z0-9_.-]{1,80}$/.test(code)?code:'';status(msg+(safeCode?'（错误码：'+safeCode+'）':''),true);$('retry').hidden=false;if(!allowed){$('login').hidden=false;}}finally{busy=false;controls();}}
+$('retry').addEventListener('click',()=>void run(async()=>{status('正在重新连接…');const data=checked(await auth.getSession());if(!admin(data?.session)){clearPrivate();status('请重新登录。');return;}allowed=true;$('login').hidden=true;$('logout').hidden=false;await load();status('已从云端读取。');}));
 $('date').addEventListener('change',()=>{if(!$('date').value||$('date').value>todayShanghai())$('date').value=todayShanghai();render();});
 $('login').addEventListener('submit',e=>{e.preventDefault();void run(async()=>{status('正在登录…');const password=$('password').value;$('password').value='';checked(await auth.signInWithPassword({username:$('username').value.trim(),password}));const data=checked(await auth.getSession());if(!admin(data?.session)){checked(await auth.signOut());throw new Error('此账号没有记录权限。');}allowed=true;$('login').hidden=true;$('logout').hidden=false;await load();status('已从云端读取。');});});
 $('logout').addEventListener('click',()=>void run(async()=>{checked(await auth.signOut());clearPrivate();status('已退出登录。');}));
