@@ -7,8 +7,11 @@ const routes = {
   '/': ['index.html', 'text/html'], '/index.html': ['index.html', 'text/html'],
   '/admin.html': ['admin.html', 'text/html'],
   '/calories.html': ['calories.html', 'text/html'],
+  '/blood-pressure.html': ['blood-pressure.html', 'text/html'],
   '/assets/calories.js': ['assets/calories.js', 'text/javascript'],
   '/assets/calories.css': ['assets/calories.css', 'text/css'],
+  '/assets/blood-pressure.js': ['assets/blood-pressure.js', 'text/javascript'],
+  '/assets/blood-pressure.css': ['assets/blood-pressure.css', 'text/css'],
   '/cloudbase.config.js': ['cloudbase.config.js', 'text/javascript'],
   '/assets/admin.js': ['assets/admin.js', 'text/javascript'],
   '/assets/admin.css': ['assets/admin.css', 'text/css']

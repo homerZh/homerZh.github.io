@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>血压记录 · Homer</title>
+  <link rel="stylesheet" href="assets/blood-pressure.css?v=20260925">
+  <script defer src="cloudbase.config.js"></script>
+  <script defer src="assets/blood-pressure.js?v=20260925"></script>
+</head>
+<body>
+  <div class="shell">
+    <header><a href="./">← 工具箱</a><span>血压记录</span><button id="logout" type="button" hidden>退出登录</button></header>
+    <main>
+      <h1>血压记录</h1>
+      <p id="status" role="status" aria-live="polite">正在连接…</p>
+      <button id="retry" type="button" hidden>重新连接</button>
+      <form id="login" hidden>
+        <h2>登录后记录</h2>
+        <div class="login-fields">
+          <label>用户名<input id="username" value="homer" autocomplete="username" required></label>
+          <label>密码<input id="password" type="password" autocomplete="current-password" required></label>
+          <button type="submit">登录</button>
+        </div>
+      </form>
+      <section class="panel" aria-labelledby="record-title">
+        <h2 id="record-title">新增记录</h2>
+        <form id="record-form">
+          <fieldset class="time-options">
+            <legend>记录时间</legend>
+            <label><input type="radio" name="time-mode" value="current" checked> 当前时间</label>
+            <label><input type="radio" name="time-mode" value="historical"> 补录历史</label>
+          </fieldset>
+          <label class="date-field">日期和时间<input id="recorded-at" type="datetime-local" required></label>
+          <p class="hint" id="time-hint">保存时会采用当前时间。</p>
+          <div class="measurement-grid">
+            <label>上压 <small>mmHg</small><input id="systolic" type="number" min="1" max="300" step="1" inputmode="numeric" required></label>
+            <label>下压 <small>mmHg</small><input id="diastolic" type="number" min="1" max="300" step="1" inputmode="numeric" required></label>
+            <label>心跳 <small>次/分钟</small><input id="pulse" type="number" min="1" max="300" step="1" inputmode="numeric" required></label>
+          </div>
+          <button id="save" type="submit" disabled>保存记录</button>
+        </form>
+      </section>
+      <section class="history" aria-labelledby="history-title">
+        <div class="history-heading"><div><h2 id="history-title">历史记录</h2><p>显示最近 50 条，较早记录仍保存在数据库中。</p></div><button id="reload" type="button" class="secondary" disabled>重新读取</button></div>
+        <ul id="records"></ul>
+      </section>
+    </main>
+  </div>
+</body>
+</html>
