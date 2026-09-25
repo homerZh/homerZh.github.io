@@ -9,6 +9,10 @@ test('snacks subtract and exercise adds to net savings',()=>{
  assert.equal(difference({meal:'exercise',baseline:0,calories:350}),350);
  assert.equal(totalDifference([{meal:'breakfast',baseline:550,calories:400},{meal:'snack',baseline:0,calories:200},{meal:'exercise',baseline:0,calories:350}]),300);
 });
+test('multiple activity entries are counted separately with meals',()=>{
+ const records=[{meal:'breakfast',baseline:550,calories:400},{kind:'snack',calories:100},{kind:'snack',calories:80},{kind:'exercise',calories:250},{kind:'exercise',calories:50}];
+ assert.equal(totalDifference(records),270);
+});
 test('six calendar months handles short months and leap years',()=>{assert.equal(endDate('2026-08-31'),'2027-02-28');assert.equal(endDate('2023-08-31'),'2024-02-29');assert.equal(planDays('2026-09-21'),181);});
 test('goal is explicit simplified conversion',()=>assert.equal(targetKcal(),115500));
 test('invalid, blank and fractional input rejected',()=>{for(const n of ['',-1,'bad',0.5,10001])assert.equal(validCalories(n),false);assert.equal(validCalories('0'),true);});
