@@ -8,7 +8,7 @@ const names = { breakfast: '早餐', lunch: '中餐', dinner: '晚餐', snack: '
 const auth = app.auth, db = app.rdb();
 const defaultPlan = () => ({ id: 'main', start_date: todayShanghai(), breakfast: 550, lunch: 880, dinner: 770 });
 const blankEditor = () => ({ id: null, note: '', calories: '', duration: '' });
-let plan = defaultPlan(), meals = [], entries = [], loaded = false, allowed = false, busy = false;
+let plan = defaultPlan(), meals = [], entries = [], fixedShortcuts = [], loaded = false, allowed = false, busy = false;
 const drafts = {};
 const editors = { snack: blankEditor(), exercise: blankEditor() };
 
@@ -77,11 +77,12 @@ function activityCard(kind, day) {
   calories.addEventListener('input', () => { editor.calories = calories.value; });
   const shortcuts = document.createElement('div'); shortcuts.className = 'shortcuts';
   const caption = document.createElement('p'); caption.className = 'empty'; caption.textContent = '常用项 · 点击只填入，不保存'; shortcuts.append(caption);
-  const items = activityShortcuts(entries, kind);
+  const fixed = fixedShortcuts.filter(item => item.kind === kind).map(item => ({ ...item, fixed: true }));
+  const items = [...fixed, ...activityShortcuts(entries, kind).filter(item => !fixed.some(f => f.note === item.note && f.calories === item.calories))];
   for (const item of items) {
     const button = document.createElement('button'); button.type = 'button'; button.className = 'shortcut';
     button.textContent = `${item.note} · ${item.calories} 千卡${kind === 'exercise' && item.duration_minutes != null ? ` · ${item.duration_minutes} 分钟` : ''}`;
-    button.title = `已记录 ${item.count} 次${kind === 'exercise' ? '；时长参考最近一次已填写的记录，可调整' : ''}`;
+    button.title = item.fixed ? '固定快捷项；点击填入，可继续修改' : `已记录 ${item.count} 次${kind === 'exercise' ? '；时长参考最近一次已填写的记录，可调整' : ''}`;
     button.addEventListener('click', () => {
       note.value = editor.note = item.note; calories.value = editor.calories = String(item.calories);
       if (duration) duration.value = editor.duration = item.duration_minutes == null ? '' : String(item.duration_minutes);
@@ -143,7 +144,7 @@ async function requireAdmin() { const data = checked(await auth.getSession()); i
 function clearPrivate() {
   for (const key of Object.keys(drafts)) delete drafts[key];
   for (const kind of ACTIVITY_TYPES) editors[kind] = blankEditor();
-  allowed = false; loaded = false; meals = []; entries = []; plan = defaultPlan();
+  allowed = false; loaded = false; meals = []; entries = []; fixedShortcuts = []; plan = defaultPlan();
   $('login').hidden = false; $('logout').hidden = true; render();
 }
 async function fetchAll(table, columns) {
@@ -159,8 +160,9 @@ async function load() {
   if (!plans?.length) throw new Error('计划尚未初始化，请先执行饮食记录数据库脚本。');
   const nextMeals = await fetchAll('calorie_meals', 'id,day,meal,calories,baseline');
   const nextEntries = await fetchAll('calorie_entries', 'id,day,kind,note,calories,duration_minutes');
+  const nextShortcuts = await fetchAll('calorie_shortcuts', 'id,kind,note,calories,duration_minutes');
   if (!allowed) return;
-  plan = plans[0]; meals = nextMeals; entries = nextEntries; loaded = true; render();
+  plan = plans[0]; meals = nextMeals; entries = nextEntries; fixedShortcuts = nextShortcuts; loaded = true; render();
 }
 async function afterSave(message) {
   try { await load(); status(message); }
