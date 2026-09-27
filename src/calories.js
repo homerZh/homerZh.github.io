@@ -1,4 +1,5 @@
 import { app } from './cloudbase-client.js';
+import { exerciseWeek, activityShortcuts, validDuration } from './activity-tools.mjs';
 import { MEALS, ACTIVITY_TYPES, todayShanghai, endDate, planDays, difference, totalDifference, targetKcal, validCalories, describeDifference } from './calorie-math.mjs';
 
 const $ = id => document.getElementById(id);
@@ -6,7 +7,7 @@ const { adminUid } = window.CLOUDBASE_CONFIG;
 const names = { breakfast: '早餐', lunch: '中餐', dinner: '晚餐', snack: '加餐', exercise: '运动消耗' };
 const auth = app.auth, db = app.rdb();
 const defaultPlan = () => ({ id: 'main', start_date: todayShanghai(), breakfast: 550, lunch: 880, dinner: 770 });
-const blankEditor = () => ({ id: null, note: '', calories: '' });
+const blankEditor = () => ({ id: null, note: '', calories: '', duration: '' });
 let plan = defaultPlan(), meals = [], entries = [], loaded = false, allowed = false, busy = false;
 const drafts = {};
 const editors = { snack: blankEditor(), exercise: blankEditor() };
@@ -51,9 +52,9 @@ function activityCard(kind, day) {
   const list = card.querySelector('.activity-list');
   for (const row of rows) {
     const item = document.createElement('div'); item.className = 'activity-item';
-    const detail = document.createElement('span'); detail.textContent = `${row.note} · ${row.calories.toLocaleString()} 千卡`;
+    const detail = document.createElement('span'); detail.textContent = `${row.note} · ${row.calories.toLocaleString()} 千卡${kind === 'exercise' ? ` · ${row.duration_minutes == null ? '时长待补充' : row.duration_minutes + ' 分钟'}` : ''}`;
     const edit = document.createElement('button'); edit.type = 'button'; edit.className = 'secondary'; edit.textContent = '编辑';
-    edit.addEventListener('click', () => { editors[kind] = { id: row.id, note: row.note, calories: String(row.calories) }; render(); });
+    edit.addEventListener('click', () => { editors[kind] = { id: row.id, note: row.note, calories: String(row.calories), duration: row.duration_minutes == null ? '' : String(row.duration_minutes) }; render(); });
     const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'secondary'; remove.textContent = '删除';
     remove.addEventListener('click', () => { if (!confirm(`删除“${row.note}”这条记录？`)) return; void run(async () => {
       await requireAdmin(); checked(await db.from('calorie_entries').delete().eq('id', row.id));
@@ -64,17 +65,42 @@ function activityCard(kind, day) {
   }
   if (!rows.length) { const empty = document.createElement('p'); empty.className = 'empty'; empty.textContent = '当天暂无记录'; list.append(empty); }
   const form = card.querySelector('form'), note = form.elements.namedItem('note'), calories = form.elements.namedItem('calories');
+  let duration;
+  if (kind === 'exercise') {
+    const label = document.createElement('label'); label.textContent = '运动时长 · 分钟';
+    duration = document.createElement('input'); duration.type = 'number'; duration.min = '1'; duration.max = '1440'; duration.step = '1'; duration.placeholder = '可留空，之后补充';
+    duration.value = editor.duration; label.append(duration); calories.closest('label').after(label);
+    duration.addEventListener('input', () => { editor.duration = duration.value; });
+  }
   note.value = editor.note; calories.value = editor.calories;
   note.addEventListener('input', () => { editor.note = note.value; });
   calories.addEventListener('input', () => { editor.calories = calories.value; });
+  const shortcuts = document.createElement('div'); shortcuts.className = 'shortcuts';
+  const caption = document.createElement('p'); caption.className = 'empty'; caption.textContent = '常用项 · 点击只填入，不保存'; shortcuts.append(caption);
+  const items = activityShortcuts(entries, kind);
+  for (const item of items) {
+    const button = document.createElement('button'); button.type = 'button'; button.className = 'shortcut';
+    button.textContent = `${item.note} · ${item.calories} 千卡${kind === 'exercise' && item.duration_minutes != null ? ` · ${item.duration_minutes} 分钟` : ''}`;
+    button.title = `已记录 ${item.count} 次${kind === 'exercise' ? '；时长参考最近一次已填写的记录，可调整' : ''}`;
+    button.addEventListener('click', () => {
+      note.value = editor.note = item.note; calories.value = editor.calories = String(item.calories);
+      if (duration) duration.value = editor.duration = item.duration_minutes == null ? '' : String(item.duration_minutes);
+      note.focus();
+    });
+    shortcuts.append(button);
+  }
+  if (!items.length) { const empty = document.createElement('p'); empty.className = 'empty'; empty.textContent = '同类项目、相同热量累计记录 3 次后会显示在这里。'; shortcuts.append(empty); }
+  card.append(shortcuts);
   form.addEventListener('submit', event => { event.preventDefault(); void run(async () => {
     const text = note.value.trim();
     if (!validDay(day)) throw new Error('请选择今天或之前的日期。');
     if (!text || text.length > 200) throw new Error('备注需填写 1–200 个字符。');
     if (!validCalories(calories.value)) throw new Error('请输入 0–10000 的整数千卡。');
+    if (duration && !validDuration(duration.value)) throw new Error('运动时长需填写 1–1440 的整数分钟，或暂时留空。');
+    const durationMinutes = duration && duration.value !== '' ? Number(duration.value) : null;
     await requireAdmin();
-    if (editor.id) checked(await db.from('calorie_entries').update({ note: text, calories: Number(calories.value) }).eq('id', editor.id).eq('day', day).eq('kind', kind));
-    else checked(await db.from('calorie_entries').insert({ id: crypto.randomUUID(), day, kind, note: text, calories: Number(calories.value) }));
+    if (editor.id) checked(await db.from('calorie_entries').update({ note: text, calories: Number(calories.value), duration_minutes: durationMinutes }).eq('id', editor.id).eq('day', day).eq('kind', kind));
+    else checked(await db.from('calorie_entries').insert({ id: crypto.randomUUID(), day, kind, note: text, calories: Number(calories.value), duration_minutes: durationMinutes }));
     editors[kind] = blankEditor(); await afterSave(editor.id ? '记录已修改。' : '记录已添加。');
   }); });
   card.querySelector('.cancel-edit')?.addEventListener('click', () => { editors[kind] = blankEditor(); render(); });
@@ -97,7 +123,21 @@ function render() {
   $('progress').style.width = `${loaded ? Math.min(100, Math.max(0, total / targetKcal() * 100)) : 0}%`;
   $('meals').replaceChildren(...MEALS.map(m => mealCard(m, day)));
   $('activities').replaceChildren(...ACTIVITY_TYPES.map(k => activityCard(k, day)));
+  renderWeek(day);
   controls();
+}
+function renderWeek(day) {
+  const week = exerciseWeek(entries, day);
+  $('week-range').textContent = `${week.days[0].day} 至 ${day}`;
+  $('week-summary').textContent = loaded ? `${week.count} 次运动 · ${week.activeDays} 天有运动 · ${week.calories.toLocaleString()} 千卡 · 已记录时长 ${week.minutes} 分钟${week.missing ? `（另有 ${week.missing} 条时长待补充）` : ''}` : '登录后查看';
+  const list = $('week-days'); list.replaceChildren();
+  if (!loaded) return;
+  for (const item of week.days) {
+    const row = document.createElement('li');
+    const time = item.missing && !item.minutes ? `${item.missing} 条时长待补充` : `${item.minutes} 分钟${item.missing ? `，另有 ${item.missing} 条时长待补充` : ''}`;
+    row.textContent = `${item.day.slice(5)}　${item.count} 次 · ${item.calories} 千卡 · ${time}`;
+    list.append(row);
+  }
 }
 async function requireAdmin() { const data = checked(await auth.getSession()); if (!admin(data?.session)) { clearPrivate(); throw new Error('请先用 homer 登录。'); } }
 function clearPrivate() {
@@ -118,7 +158,7 @@ async function load() {
   const plans = checked(await db.from('calorie_plan').select('*').eq('id', 'main'));
   if (!plans?.length) throw new Error('计划尚未初始化，请先执行饮食记录数据库脚本。');
   const nextMeals = await fetchAll('calorie_meals', 'id,day,meal,calories,baseline');
-  const nextEntries = await fetchAll('calorie_entries', 'id,day,kind,note,calories');
+  const nextEntries = await fetchAll('calorie_entries', 'id,day,kind,note,calories,duration_minutes');
   if (!allowed) return;
   plan = plans[0]; meals = nextMeals; entries = nextEntries; loaded = true; render();
 }
