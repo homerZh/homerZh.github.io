@@ -130,6 +130,9 @@ async function run(action) {
 document.querySelectorAll('input[name="time-mode"]').forEach(input => input.addEventListener('change', syncTime));
 document.querySelectorAll('input[name="glucose-time-mode"]').forEach(input => input.addEventListener('change', syncTime));
 $('glucose-relation').addEventListener('change', syncMealRelation);
+document.querySelectorAll('.after-meal-shortcuts button').forEach(button => button.addEventListener('click', () => {
+  $('after-meal-minutes').value = button.dataset.minutes;
+}));
 setInterval(() => { if (!busy) syncTime(); }, 30000);
 $('login').addEventListener('submit', event => { event.preventDefault(); void run(async () => {
   status('正在登录…');

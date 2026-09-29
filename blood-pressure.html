@@ -4,9 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>血压与血糖记录 · Homer</title>
-  <link rel="stylesheet" href="assets/blood-pressure.css?v=20260929">
+  <link rel="stylesheet" href="assets/blood-pressure.css?v=20260929b">
   <script defer src="cloudbase.config.js"></script>
-  <script defer src="assets/blood-pressure.js?v=20260929"></script>
+  <script defer src="assets/blood-pressure.js?v=20260929b"></script>
 </head>
 <body>
   <div class="shell">
@@ -59,8 +59,18 @@
             <p class="hint" id="glucose-time-hint">保存时会采用当前时间。</p>
             <div class="glucose-fields">
               <label>血糖 <small>mmol/L</small><input id="glucose-value" type="number" min="0.01" max="100" step="0.01" inputmode="decimal" required></label>
-              <label>测量时段<select id="glucose-relation" required><option value="">请选择</option><option value="fasting">空腹</option><option value="before_meal">餐前</option><option value="after_meal">餐后</option></select></label>
-              <label id="after-meal-field" hidden>餐后经过 <small>分钟，可选</small><input id="after-meal-minutes" type="number" min="1" max="1440" step="1" inputmode="numeric" placeholder="例如 120"></label>
+              <label>测量时段<small aria-hidden="true">&nbsp;</small><select id="glucose-relation" required><option value="">请选择</option><option value="fasting">空腹</option><option value="before_meal">餐前</option><option value="after_meal">餐后</option></select></label>
+              <div id="after-meal-field" class="after-meal-group" hidden>
+                <label>餐后经过 <small>分钟，可选</small><input id="after-meal-minutes" type="number" min="1" max="1440" step="1" inputmode="numeric" placeholder="例如 120"></label>
+                <div class="after-meal-shortcuts" aria-label="常用餐后时间">
+                  <button type="button" data-minutes="30">30分钟</button>
+                  <button type="button" data-minutes="60">1小时</button>
+                  <button type="button" data-minutes="90">1.5小时</button>
+                  <button type="button" data-minutes="120">2小时</button>
+                  <button type="button" data-minutes="135">2.25小时</button>
+                  <button type="button" data-minutes="150">2.5小时</button>
+                </div>
+              </div>
             </div>
             <button id="glucose-save" type="submit" disabled>保存血糖记录</button>
           </form>
