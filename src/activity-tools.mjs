@@ -15,9 +15,8 @@ export function exerciseWeek(entries, endDay) {
 export function shortcutDescription(kind, note) {
   const text = note.trim().replace(/\s+/g, ' ');
   if (kind === 'exercise') {
-    if (/动感单车/.test(text)) return '动感单车';
-    if (/步行/.test(text)) return '步行';
-    return text.replace(/\d+(?:\.\d+)?\s*(?:分钟|小时)/g, '').trim();
+    // Keep the route and activity details; matching calories do not imply the same activity.
+    return text.replace(/\d+(?:\.\d+)?\s*(?:分钟|小时)/g, '').replace(/\s+/g, ' ').trim() || text;
   }
   return text.replace(/^一个(.+)$/, '$1（1个）');
 }

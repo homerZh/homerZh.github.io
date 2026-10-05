@@ -7,8 +7,14 @@ test('seven days include selected day, missing durations stay separate',()=>{
  assert.equal(week.days.length,7);assert.equal(week.count,2);assert.equal(week.calories,180);assert.equal(week.minutes,20);assert.equal(week.missing,1);assert.equal(week.activeDays,2);
 });
 test('shortcuts require three matching activities and calories, use latest known duration',()=>{
- const rows=[{id:'1',day:'2026-09-01',kind:'exercise',note:'晚上步行20分钟',calories:130,duration_minutes:20},{id:'2',day:'2026-09-02',kind:'exercise',note:'晚饭前步行',calories:130,duration_minutes:null},{id:'3',day:'2026-09-03',kind:'exercise',note:'步行18分钟',calories:130,duration_minutes:18},{id:'4',day:'2026-09-04',kind:'exercise',note:'步行',calories:200,duration_minutes:30}];
- assert.deepEqual(activityShortcuts(rows,'exercise'),[{note:'步行',calories:130,count:3,duration_minutes:18}]);assert.deepEqual(activityShortcuts(rows.slice(0,2),'exercise'),[]);
+ const rows=[{id:'1',day:'2026-09-01',kind:'exercise',note:'晚饭前20分钟步行',calories:130,duration_minutes:20},{id:'2',day:'2026-09-02',kind:'exercise',note:'晚饭前步行',calories:130,duration_minutes:null},{id:'3',day:'2026-09-03',kind:'exercise',note:'晚饭前18分钟步行',calories:130,duration_minutes:18},{id:'4',day:'2026-09-04',kind:'exercise',note:'晚饭前步行',calories:200,duration_minutes:30}];
+ assert.deepEqual(activityShortcuts(rows,'exercise'),[{note:'晚饭前步行',calories:130,count:3,duration_minutes:18}]);assert.deepEqual(activityShortcuts(rows.slice(0,2),'exercise'),[]);
+});
+test('different walking routes with equal calories are not merged into a shortcut',()=>{
+ const rows=['步行：路线甲','步行：路线乙','步行：路线丙'].map((note,i)=>({id:String(i),day:'2026-09-01',kind:'exercise',note,calories:80,duration_minutes:12}));
+ assert.deepEqual(activityShortcuts(rows,'exercise'),[]);
+ const repeated=[...rows,{...rows[0],id:'3'},{...rows[0],id:'4'}];
+ assert.deepEqual(activityShortcuts(repeated,'exercise'),[{note:'步行：路线甲',calories:80,count:3,duration_minutes:12}]);
 });
 test('duration accepts unknown but rejects invalid numeric values',()=>{
  assert.equal(validDuration(''),true);assert.equal(validDuration('25'),true);
