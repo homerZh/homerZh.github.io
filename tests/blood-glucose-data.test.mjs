@@ -18,6 +18,12 @@ test('after-meal minutes are optional and do not carry over to fasting', () => {
   assert.equal(glucoseRecord({ ...input, relation: 'after_meal' }).after_meal_minutes, null);
   assert.equal(glucoseRecord({ ...input, minutes: '135' }).after_meal_minutes, null);
 });
+test('bedtime measurements support manual time without retaining an after-meal interval', () => {
+  const row = glucoseRecord({ ...input, value: '4.8', relation: 'bedtime', minutes: '120',
+    mode: 'historical', time: '2026-09-24T23:30' }, new Date('2026-09-25T03:00:00Z'));
+  assert.deepEqual(row, { glucose_mmol_l: 4.8, meal_relation: 'bedtime', after_meal_minutes: null,
+    recorded_at: '2026-09-24T15:30:00.000Z' });
+});
 test('invalid measurements and intervals are rejected before saving', () => {
   for (const value of ['', '0', '5.888', 'abc', '101']) assert.throws(() => glucoseRecord({ ...input, value }));
   for (const minutes of ['0', '1.5', '1441', 'abc']) assert.throws(() => glucoseRecord({ ...input, relation: 'after_meal', minutes }));

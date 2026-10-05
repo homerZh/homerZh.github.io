@@ -6,7 +6,7 @@
   <title>血压与血糖记录 · Homer</title>
   <link rel="stylesheet" href="assets/blood-pressure.css?v=20261005b">
   <script defer src="cloudbase.config.js"></script>
-  <script defer src="assets/blood-pressure.js?v=20261005b"></script>
+  <script defer src="assets/blood-pressure.js?v=20261006"></script>
 </head>
 <body>
   <div class="shell">
@@ -60,7 +60,7 @@
             <p class="hint" id="glucose-time-hint">保存时采用服务器当前时间（北京时间）。</p>
             <div class="glucose-fields">
               <label>血糖 <small>mmol/L</small><input id="glucose-value" type="number" min="0.01" max="100" step="0.01" inputmode="decimal" required></label>
-              <label>测量时段<small aria-hidden="true">&nbsp;</small><select id="glucose-relation" required><option value="">请选择</option><option value="fasting">空腹</option><option value="before_meal">餐前</option><option value="after_meal">餐后</option></select></label>
+              <label>测量时段<small aria-hidden="true">&nbsp;</small><select id="glucose-relation" required><option value="">请选择</option><option value="fasting">空腹</option><option value="before_meal">餐前</option><option value="after_meal">餐后</option><option value="bedtime">睡前</option></select></label>
               <div id="after-meal-field" class="after-meal-group" hidden>
                 <label>餐后经过 <small>分钟，可选</small><input id="after-meal-minutes" type="number" min="1" max="1440" step="1" inputmode="numeric" placeholder="例如 120"></label>
                 <div class="after-meal-shortcuts" aria-label="常用餐后时间">

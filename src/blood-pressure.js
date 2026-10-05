@@ -149,7 +149,7 @@ async function readRecords() {
     list.append(item);
   }
 }
-const relationLabels = { fasting: '空腹', before_meal: '餐前', after_meal: '餐后' };
+const relationLabels = { fasting: '空腹', before_meal: '餐前', after_meal: '餐后', bedtime: '睡前' };
 async function readGlucoseRecords() {
   await requireAdmin();
   const rows = checked(await db.from('blood_glucose_records')

@@ -5,8 +5,8 @@ export function glucoseRecord({ value, relation, minutes, mode, time, originalTi
   if (!/^\d+(?:\.\d{1,2})?$/.test(value) || Number(value) < 0.01 || Number(value) > 100) {
     throw new Error('血糖请填写 0.01–100 之间、最多两位小数的数值。');
   }
-  if (!['fasting', 'before_meal', 'after_meal'].includes(relation)) {
-    throw new Error('请选择空腹、餐前或餐后。');
+  if (!['fasting', 'before_meal', 'after_meal', 'bedtime'].includes(relation)) {
+    throw new Error('请选择空腹、餐前、餐后或睡前。');
   }
   const interval = relation === 'after_meal' && minutes !== '' ? Number(minutes) : null;
   if (interval !== null && (!Number.isInteger(interval) || interval < 1 || interval > 1440)) {

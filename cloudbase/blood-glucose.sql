@@ -4,7 +4,7 @@ CREATE TABLE public.blood_glucose_records (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   recorded_at timestamptz NOT NULL DEFAULT now() CHECK (recorded_at <= now()),
   glucose_mmol_l numeric(5,2) NOT NULL CHECK (glucose_mmol_l BETWEEN 0.01 AND 100),
-  meal_relation text NOT NULL CHECK (meal_relation IN ('fasting', 'before_meal', 'after_meal')),
+  meal_relation text NOT NULL CHECK (meal_relation IN ('fasting', 'before_meal', 'after_meal', 'bedtime')),
   after_meal_minutes integer CHECK (
     after_meal_minutes IS NULL OR (meal_relation = 'after_meal' AND after_meal_minutes BETWEEN 1 AND 1440)
   ),
