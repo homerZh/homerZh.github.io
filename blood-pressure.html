@@ -4,9 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>血压与血糖记录 · Homer</title>
-  <link rel="stylesheet" href="assets/blood-pressure.css?v=20261005">
+  <link rel="stylesheet" href="assets/blood-pressure.css?v=20261005b">
   <script defer src="cloudbase.config.js"></script>
-  <script defer src="assets/blood-pressure.js?v=20261005"></script>
+  <script defer src="assets/blood-pressure.js?v=20261005b"></script>
 </head>
 <body>
   <div class="shell">
@@ -26,7 +26,7 @@
       <section class="panel" aria-labelledby="record-title">
         <h2 id="record-title">新增记录</h2>
         <form id="record-form">
-          <fieldset class="time-options">
+          <fieldset class="time-options" id="pressure-time-options">
             <legend>记录时间</legend>
             <label><input type="radio" name="time-mode" value="current" checked> 当前时间</label>
             <label><input type="radio" name="time-mode" value="historical"> 补录历史</label>
@@ -38,7 +38,8 @@
             <label>下压 <small>mmHg</small><input id="diastolic" type="number" min="1" max="300" step="1" inputmode="numeric" required></label>
             <label>心跳 <small>次/分钟</small><input id="pulse" type="number" min="1" max="300" step="1" inputmode="numeric" required></label>
           </div>
-          <button id="save" type="submit" disabled>保存记录</button>
+          <div class="form-actions"><button id="save" type="submit" disabled>保存记录</button><button id="pressure-cancel" type="button" class="secondary" hidden>取消修改</button></div>
+          <p id="pressure-status" class="record-status" role="status" aria-live="polite"></p>
         </form>
       </section>
       <section class="history" aria-labelledby="history-title">
@@ -50,7 +51,7 @@
         <div class="panel" aria-labelledby="glucose-record-title">
           <h3 id="glucose-record-title">新增记录</h3>
           <form id="glucose-form">
-            <fieldset class="time-options">
+            <fieldset class="time-options" id="glucose-time-options">
               <legend>记录时间</legend>
               <label><input type="radio" name="glucose-time-mode" value="current" checked> 当前时间</label>
               <label><input type="radio" name="glucose-time-mode" value="historical"> 补录历史</label>
@@ -72,7 +73,7 @@
                 </div>
               </div>
             </div>
-            <button id="glucose-save" type="submit" disabled>保存血糖记录</button>
+            <div class="form-actions"><button id="glucose-save" type="submit" disabled>保存血糖记录</button><button id="glucose-cancel" type="button" class="secondary" hidden>取消修改</button></div>
             <p id="glucose-status" role="status" aria-live="polite"></p>
           </form>
         </div>

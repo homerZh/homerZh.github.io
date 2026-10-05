@@ -18,10 +18,16 @@ REVOKE ALL ON public.blood_glucose_records FROM PUBLIC, anon, authenticated;
 GRANT SELECT ON public.blood_glucose_records TO authenticated;
 GRANT INSERT (recorded_at, glucose_mmol_l, meal_relation, after_meal_minutes)
   ON public.blood_glucose_records TO authenticated;
+GRANT UPDATE (recorded_at, glucose_mmol_l, meal_relation, after_meal_minutes)
+  ON public.blood_glucose_records TO authenticated;
 CREATE POLICY homer_blood_glucose_read ON public.blood_glucose_records
   FOR SELECT TO authenticated
   USING ((SELECT auth.uid()) = '2101780961169797122');
 CREATE POLICY homer_blood_glucose_insert ON public.blood_glucose_records
   FOR INSERT TO authenticated
+  WITH CHECK ((SELECT auth.uid()) = '2101780961169797122');
+CREATE POLICY homer_blood_glucose_update ON public.blood_glucose_records
+  FOR UPDATE TO authenticated
+  USING ((SELECT auth.uid()) = '2101780961169797122')
   WITH CHECK ((SELECT auth.uid()) = '2101780961169797122');
 COMMIT;

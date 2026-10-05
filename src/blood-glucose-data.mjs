@@ -1,6 +1,7 @@
 import { recordedTimestamp } from './blood-pressure-time.mjs';
+import { editedTimestamp } from './health-record-edit.mjs';
 
-export function glucoseRecord({ value, relation, minutes, mode, time }, now = new Date()) {
+export function glucoseRecord({ value, relation, minutes, mode, time, originalTimestamp }, now = new Date()) {
   if (!/^\d+(?:\.\d{1,2})?$/.test(value) || Number(value) < 0.01 || Number(value) > 100) {
     throw new Error('血糖请填写 0.01–100 之间、最多两位小数的数值。');
   }
@@ -13,7 +14,8 @@ export function glucoseRecord({ value, relation, minutes, mode, time }, now = ne
   }
   const record = { glucose_mmol_l: Number(value), meal_relation: relation, after_meal_minutes: interval };
   // Current measurements use the database clock, so clock drift cannot violate its time constraint.
-  if (mode === 'historical') record.recorded_at = recordedTimestamp(mode, time, now);
+  if (mode === 'historical') record.recorded_at = originalTimestamp
+    ? editedTimestamp(originalTimestamp, time, now) : recordedTimestamp(mode, time, now);
   else if (mode !== 'current') throw new Error('请选择记录时间方式。');
   return record;
 }
