@@ -2,7 +2,7 @@
 BEGIN;
 CREATE TABLE public.blood_glucose_records (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  recorded_at timestamptz NOT NULL CHECK (recorded_at <= now()),
+  recorded_at timestamptz NOT NULL DEFAULT now() CHECK (recorded_at <= now()),
   glucose_mmol_l numeric(5,2) NOT NULL CHECK (glucose_mmol_l BETWEEN 0.01 AND 100),
   meal_relation text NOT NULL CHECK (meal_relation IN ('fasting', 'before_meal', 'after_meal')),
   after_meal_minutes integer CHECK (

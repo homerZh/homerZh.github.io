@@ -1,5 +1,6 @@
 import { app } from './cloudbase-client.js';
 import { shanghaiInput, recordedTimestamp, displayShanghai } from './blood-pressure-time.mjs';
+import { glucoseRecord } from './blood-glucose-data.mjs';
 
 const $ = id => document.getElementById(id);
 const { adminUid } = window.CLOUDBASE_CONFIG;
@@ -14,6 +15,10 @@ function status(message, error = false) {
   $('status').textContent = message;
   $('status').classList.toggle('error', error);
   if (!error) $('retry').hidden = true;
+}
+function glucoseStatus(message, error = false) {
+  $('glucose-status').textContent = message;
+  $('glucose-status').classList.toggle('error', error);
 }
 function controls() {
   document.querySelectorAll('button').forEach(button => {
@@ -34,7 +39,7 @@ function syncTime() {
   $('time-hint').textContent = mode() === 'current' ? '保存时会采用当前时间。' : '选择测量时的日期和时间（北京时间）。';
   $('glucose-recorded-at').max = now;
   if (glucoseMode() === 'current') $('glucose-recorded-at').value = now;
-  $('glucose-time-hint').textContent = glucoseMode() === 'current' ? '保存时会采用当前时间。' : '选择测量时的日期和时间（北京时间）。';
+  $('glucose-time-hint').textContent = glucoseMode() === 'current' ? '保存时采用服务器当前时间（北京时间）。' : '选择测量时的日期和时间（北京时间）。';
   controls();
 }
 function syncMealRelation() {
@@ -51,6 +56,7 @@ function clearPrivate() {
   $('glucose-records').replaceChildren();
   $('record-form').reset();
   $('glucose-form').reset();
+  glucoseStatus('');
   syncMealRelation();
   syncTime();
 }
@@ -113,17 +119,20 @@ async function readAllRecords() {
   await readRecords();
   await readGlucoseRecords();
 }
-async function run(action) {
+async function run(action, scope = 'page') {
   if (busy) return;
   busy = true; controls();
   try { await action(); }
   catch (error) {
     const code = String(error?.code || '');
-    const message = /42P01|PGRST205/.test(code) ? '记录表尚未创建。' :
+    const message = /23514/.test(code) ? '记录未保存：日期、测量值或餐后时间不符合数据库规则，请核对后重试。' :
+      /42P01|PGRST205/.test(code) ? '记录表尚未创建。' :
       /42501/.test(code) ? '数据库拒绝访问，请检查账号权限。' :
       error instanceof Error && !code ? error.message : '操作失败，请检查网络或数据库配置。';
     const safeCode = /^[A-Za-z0-9_.-]{1,80}$/.test(code) ? code : '';
-    status(message + (safeCode ? `（错误码：${safeCode}）` : ''), true);
+    const feedback = message + (safeCode ? `（错误码：${safeCode}）` : '');
+    status(feedback, true);
+    if (scope === 'glucose') glucoseStatus(feedback, true);
     $('retry').hidden = false;
   } finally { busy = false; controls(); }
 }
@@ -160,29 +169,26 @@ $('record-form').addEventListener('submit', event => { event.preventDefault(); v
 }); });
 $('reload').addEventListener('click', () => void run(async () => { await readRecords(); status('已从云端重新读取。'); }));
 $('glucose-form').addEventListener('submit', event => { event.preventDefault(); void run(async () => {
-  const glucose = Number($('glucose-value').value);
-  if (!/^\d+(?:\.\d{1,2})?$/.test($('glucose-value').value) || glucose < 0.01 || glucose > 100) {
-    throw new Error('血糖请填写 0.01–100 之间、最多两位小数的数值。');
-  }
-  const relation = $('glucose-relation').value;
-  if (!Object.hasOwn(relationLabels, relation)) throw new Error('请选择空腹、餐前或餐后。');
-  const intervalText = $('after-meal-minutes').value;
-  const interval = relation === 'after_meal' && intervalText !== '' ? Number(intervalText) : null;
-  if (interval !== null && (!Number.isInteger(interval) || interval < 1 || interval > 1440)) {
-    throw new Error('餐后时间请填写 1–1440 分钟的整数，或留空。');
-  }
-  const recordedAt = recordedTimestamp(glucoseMode(), $('glucose-recorded-at').value);
+  const record = glucoseRecord({ value: $('glucose-value').value, relation: $('glucose-relation').value,
+    minutes: $('after-meal-minutes').value, mode: glucoseMode(), time: $('glucose-recorded-at').value });
+  glucoseStatus('正在保存血糖记录…');
   await requireAdmin();
-  checked(await db.from('blood_glucose_records').insert({
-    recorded_at: recordedAt, glucose_mmol_l: glucose, meal_relation: relation, after_meal_minutes: interval
-  }));
+  checked(await db.from('blood_glucose_records').insert(record));
+  glucoseStatus('血糖记录已保存到云端。');
   $('glucose-value').value = '';
   $('glucose-relation').value = '';
   syncMealRelation(); syncTime();
   try { await readGlucoseRecords(); status('血糖记录已保存到云端。'); }
-  catch { status('血糖记录已保存，但刷新失败。请重新读取，不要重复提交。', true); }
-}); });
-$('glucose-reload').addEventListener('click', () => void run(async () => { await readGlucoseRecords(); status('已从云端重新读取。'); }));
+  catch {
+    const message = '血糖记录已保存，但刷新失败。请重新读取，不要重复提交。';
+    status(message, true); glucoseStatus(message, true);
+  }
+}, 'glucose'); });
+$('glucose-form').addEventListener('invalid', event => glucoseStatus(event.target.validationMessage, true), true);
+$('glucose-reload').addEventListener('click', () => void run(async () => {
+  glucoseStatus('正在读取血糖记录…');
+  await readGlucoseRecords(); status('已从云端重新读取。'); glucoseStatus('血糖记录已从云端重新读取。');
+}, 'glucose'));
 $('retry').addEventListener('click', () => void run(async () => {
   const data = checked(await auth.getSession());
   if (!isAdmin(data?.session)) { clearPrivate(); status('请重新登录。'); return; }

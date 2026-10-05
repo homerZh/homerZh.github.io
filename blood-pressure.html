@@ -4,9 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>血压与血糖记录 · Homer</title>
-  <link rel="stylesheet" href="assets/blood-pressure.css?v=20260929b">
+  <link rel="stylesheet" href="assets/blood-pressure.css?v=20261005">
   <script defer src="cloudbase.config.js"></script>
-  <script defer src="assets/blood-pressure.js?v=20260929b"></script>
+  <script defer src="assets/blood-pressure.js?v=20261005"></script>
 </head>
 <body>
   <div class="shell">
@@ -56,7 +56,7 @@
               <label><input type="radio" name="glucose-time-mode" value="historical"> 补录历史</label>
             </fieldset>
             <label class="date-field">日期和时间<input id="glucose-recorded-at" type="datetime-local" required></label>
-            <p class="hint" id="glucose-time-hint">保存时会采用当前时间。</p>
+            <p class="hint" id="glucose-time-hint">保存时采用服务器当前时间（北京时间）。</p>
             <div class="glucose-fields">
               <label>血糖 <small>mmol/L</small><input id="glucose-value" type="number" min="0.01" max="100" step="0.01" inputmode="decimal" required></label>
               <label>测量时段<small aria-hidden="true">&nbsp;</small><select id="glucose-relation" required><option value="">请选择</option><option value="fasting">空腹</option><option value="before_meal">餐前</option><option value="after_meal">餐后</option></select></label>
@@ -73,6 +73,7 @@
               </div>
             </div>
             <button id="glucose-save" type="submit" disabled>保存血糖记录</button>
+            <p id="glucose-status" role="status" aria-live="polite"></p>
           </form>
         </div>
         <section class="history" aria-labelledby="glucose-history-title">

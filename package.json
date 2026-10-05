@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "scripts": {
     "build": "esbuild src/admin.js src/calories.js src/blood-pressure.js --bundle --minify --outdir=assets --platform=browser",
-    "test": "node --test tests/calorie-math.test.mjs tests/blood-pressure-time.test.mjs tests/activity-tools.test.mjs",
+    "test": "node --test tests/calorie-math.test.mjs tests/blood-pressure-time.test.mjs tests/activity-tools.test.mjs tests/blood-glucose-data.test.mjs",
     "preview": "node scripts/preview.cjs"
   },
   "dependencies": {
