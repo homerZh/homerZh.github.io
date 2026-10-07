@@ -1,6 +1,6 @@
 import { app } from './cloudbase-client.js';
 import { exerciseWeek, activityShortcuts, validDuration } from './activity-tools.mjs';
-import { MEALS, ACTIVITY_TYPES, todayShanghai, endDate, planDays, difference, totalDifference, targetKcal, validCalories, describeDifference } from './calorie-math.mjs';
+import { MEALS, ACTIVITY_TYPES, todayShanghai, endDate, planDays, planProgress, difference, totalDifference, targetKcal, validCalories, describeDifference } from './calorie-math.mjs';
 
 const $ = id => document.getElementById(id);
 const { adminUid } = window.CLOUDBASE_CONFIG;
@@ -11,6 +11,7 @@ const blankEditor = () => ({ id: null, note: '', calories: '', duration: '' });
 let plan = defaultPlan(), meals = [], entries = [], fixedShortcuts = [], loaded = false, allowed = false, busy = false;
 const drafts = {};
 const editors = { snack: blankEditor(), exercise: blankEditor() };
+let summaryDay = todayShanghai();
 
 $('date').value = todayShanghai();
 $('date').max = todayShanghai();
@@ -109,24 +110,36 @@ function activityCard(kind, day) {
 }
 function render() {
   const day = selectedDay(), dayMeals = meals.filter(r => r.day === day && MEALS.includes(r.meal)), dayEntries = entries.filter(r => r.day === day);
-  const all = [...meals.filter(r => MEALS.includes(r.meal)), ...entries];
-  const total = totalDifference(all.filter(r => r.day >= plan.start_date && r.day < endDate(plan.start_date)));
-  $('period').textContent = `${plan.start_date} 至 ${endDate(plan.start_date)}（${planDays(plan.start_date)} 天）`;
-  $('daily-target').textContent = `日均计划差额 ${Math.round(targetKcal() / planDays(plan.start_date))} 千卡`;
+  renderPlanSummary();
   $('start-date').value = plan.start_date;
   MEALS.forEach(m => { $(`base-${m}`).value = plan[m]; });
   const intake = [...dayMeals, ...dayEntries.filter(r => r.kind === 'snack')].reduce((n, r) => n + r.calories, 0);
   $('intake').textContent = loaded ? `${intake.toLocaleString()} 千卡` : '—';
   $('coverage').textContent = loaded ? `${dayMeals.length} / 3 餐已记录` : '登录后查看';
   $('day-diff').textContent = loaded ? `${totalDifference([...dayMeals, ...dayEntries]).toLocaleString()} 千卡` : '—';
-  $('total-diff').textContent = loaded ? `${total.toLocaleString()} 千卡` : '—';
-  $('progress-text').textContent = loaded ? `目标进度 ${(total / targetKcal() * 100).toFixed(1)}%` : '登录后查看';
-  $('progress').style.width = `${loaded ? Math.min(100, Math.max(0, total / targetKcal() * 100)) : 0}%`;
   $('meals').replaceChildren(...MEALS.map(m => mealCard(m, day)));
   $('activities').replaceChildren(...ACTIVITY_TYPES.map(k => activityCard(k, day)));
   renderWeek(day);
   controls();
 }
+function renderPlanSummary() {
+  summaryDay = todayShanghai();
+  const all = [...meals.filter(r => MEALS.includes(r.meal)), ...entries];
+  const { daysLeft, total, remaining, daily } = planProgress(plan.start_date, all, summaryDay);
+  $('period').textContent = `${plan.start_date} 至 ${endDate(plan.start_date)}（${planDays(plan.start_date)} 天） · 剩余 ${daysLeft} 天`;
+  $('remaining-target').textContent = loaded ? `剩余计划差额 ${remaining.toLocaleString()} 千卡` : '登录后查看剩余差额';
+  $('daily-target').textContent = !loaded ? '日均计划差额：登录后计算' : remaining === 0 ? '日均计划差额 0 千卡（记录目标已达成）' : daily === null ? '计划已到期，无法计算剩余日均差额' : `日均计划差额 ${daily.toLocaleString()} 千卡`;
+  $('daily-target').title = loaded && daily !== null ? `${remaining.toLocaleString()} 千卡 ÷ ${daysLeft} 天，向上取整` : '';
+  $('total-diff').textContent = loaded ? `${total.toLocaleString()} 千卡` : '—';
+  $('progress-text').textContent = loaded ? `目标进度 ${(total / targetKcal() * 100).toFixed(1)}%` : '登录后查看';
+  $('progress').style.width = `${loaded ? Math.min(100, Math.max(0, total / targetKcal() * 100)) : 0}%`;
+}
+function refreshPlanDay() {
+  const today = todayShanghai();
+  if (today !== summaryDay) { $('date').max = today; renderPlanSummary(); }
+}
+setInterval(refreshPlanDay, 60000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshPlanDay(); });
 function renderWeek(day) {
   const week = exerciseWeek(entries, day);
   $('week-range').textContent = `${week.days[0].day} 至 ${day}`;

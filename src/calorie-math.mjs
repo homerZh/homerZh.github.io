@@ -18,5 +18,12 @@ export function difference(record) {
 }
 export function totalDifference(records) { return records.reduce((sum,r)=>sum+difference(r),0); }
 export function targetKcal(from=90,to=75) { return Math.round((from-to)*7700); }
+export function planProgress(start, records, today = todayShanghai()) {
+  const end = endDate(start);
+  const daysLeft = Math.max(0, Math.round((Date.parse(end) - Date.parse(today < start ? start : today)) / 86400000));
+  const total = totalDifference(records.filter(r => r.day >= start && r.day < end && r.day <= today));
+  const remaining = Math.max(0, targetKcal() - total);
+  return { daysLeft, total, remaining, daily: daysLeft ? Math.ceil(remaining / daysLeft) : null };
+}
 export function validCalories(value) { return value !== '' && Number.isInteger(Number(value)) && Number(value)>=0 && Number(value)<=10000; }
 export function describeDifference(n) { return n>0 ? `少了 ${n.toLocaleString()} 千卡` : n<0 ? `多了 ${(-n).toLocaleString()} 千卡` : '差额 0 千卡'; }
